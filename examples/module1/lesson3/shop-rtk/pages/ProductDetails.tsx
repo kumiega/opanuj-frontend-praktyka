@@ -1,18 +1,17 @@
-import React, { useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { CartContext } from '../contexts/CartContext';
-import { ProductContext } from '../contexts/ProductContext';
+import { useAppDispatch, useGetProductByIdQuery } from '../hooks/rtk';
+import { addToCart } from '../state/cartSlice';
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart } = useContext(CartContext);
-  const { products } = useContext(ProductContext);
+  const {
+    data: product,
+    error,
+    isLoading,
+  } = useGetProductByIdQuery(Number(id));
+  const dispatch = useAppDispatch();
 
-  const product = products.find((item) => {
-    return item.id === parseInt(id!);
-  });
-
-  if (!product) {
+  if (isLoading) {
     return (
       <section className="h-screen flex justify-center items-center">
         Loading...
@@ -20,7 +19,23 @@ const ProductDetails = () => {
     );
   }
 
+  if (error) {
+    return (
+      <section className="h-screen flex justify-center items-center">
+        Error fetching product details.
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="h-screen flex justify-center items-center">
+        Product with id: {id} not found!
+      </section>
+    );
+  }
   const { title, price, description, image } = product;
+
   return (
     <section
       className="pt-[450px] md:pt-32 pb-[400px] md:pb-12 lg:py-32 h-screen flex items-center"
@@ -41,7 +56,7 @@ const ProductDetails = () => {
             <p className="mb-8">{description}</p>
             <button
               data-testid="add-to-cart-button"
-              onClick={() => addToCart(product)}
+              onClick={() => dispatch(addToCart(product))}
               className="bg-green-600 py-4 px-8 text-white"
             >
               Add to cart
